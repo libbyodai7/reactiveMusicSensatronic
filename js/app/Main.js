@@ -19,14 +19,23 @@ define(["app/MyClass"],
         {
             console.log("Main initialised");
 
-            this.cubeColor = 0xf00000;
+            this.currentCubeColor = 0xffff00;
+              this.cubeColor = 0xffff00;
+
+            this.cubeColor1 = 0xf00000;
+            this.cubeColor2 = 0xffff00;
+            this.cubeColor3 = 0x079AF4;
 
 
 
             this.initAudio();
+            //this.soundAllowed();
+          //  this.soundNotAllowed();
             this.initScene();
             this.initLights();
             this.initObjects();
+
+
 
             this.render();
         }
@@ -37,7 +46,7 @@ define(["app/MyClass"],
 
             //AUDIO SET UP
             this.audio = new Audio();
-          //  this.audioStream = audioContent.createMediaStreamSource( stream );
+
             this.audio.src = 'music/SensatronicAmbient1.mp3';
             this.audio.controls = true;
             this.audio.loop = true;
@@ -48,26 +57,50 @@ define(["app/MyClass"],
 
 
             // init analyser
-            var context = new AudioContext(); // AudioContext object instance
-            var analyser = context.createAnalyser(); // AnalyserNode method
-            analyser.smoothingTimeConstant = 0.6;
-            analyser.minDecibels = -90;
-            analyser.maxDecibels = -20;
-            analyser.fftSize = 512;
+
+            //var AudioContext;
+
+
+
+            // analyser.smoothingTimeConstant = 0.6;
+            // analyser.minDecibels = -90;
+            // analyser.maxDecibels = -20;
+            // analyser.fftSize = 512;
+
+            // var start = false;
+            // var permission = false;
+            // var seconds = 0;
+            // var loud_volume_threshold = 30;
 
             // Re-route audio playback into the processing graph of the AudioContext
-            var source = context.createMediaElementSource(this.audio);
-            source.connect(analyser);
-            analyser.connect(context.destination);
 
-            this.analyser = analyser;
+
+
         }
+
+        p.soundAllowed = function(stream)
+        {
+          window.persistAudioStream = stream;
+          //h.innerHTML = "Thanks";
+          var audioContent = new AudioContext(); // AudioContext object instance
+            var audioStream = audioContent.createMediaStreamSource( stream );
+          var analyser = audioContent.createAnalyser(); // AnalyserNode method
+
+        audioStream.connect(analyser);
+        analyser.fftSize = 1024;
+      //  analyser.connect(context.destination);
+
+        this.analyser = analyser;
+
+      }
 
         p.initScene = function()
         {
+
+          navigator.getUserMedia({audio:true}, this.soundAllowed, this.soundNotAllowed);
             // //THREE.JS SCENE
             this.scene = new THREE.Scene();
-            this.scene.fog = new THREE.FogExp2( 0xcccccc, 0.01 );
+            this.scene.fog = new THREE.FogExp2( 0xcccccc, 0.0001 );
 
             //CAMERA
             this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 500);
@@ -79,7 +112,7 @@ define(["app/MyClass"],
             //RENDERER
             this.renderer = new THREE.WebGLRenderer({antialias:true});
             this.renderer.setSize( window.innerWidth, window.innerHeight );
-            this.renderer.setClearColor( this.scene.fog.color );
+            this.renderer.setClearColor( 0x2a2a2a );
 
             //Controls
 
@@ -122,7 +155,7 @@ define(["app/MyClass"],
 
 
             //CREATE SHAPE
-            this.color = 0xf00000;
+            this.color = 0x000000;
             //Axis helper
             //var axisHelper = new THREE.AxisHelper( 5 );
             //this.scene.add(axisHelper);
@@ -134,7 +167,15 @@ define(["app/MyClass"],
                 var cubePositionX = Math.floor(Math.random() * 17) - 8;
                 var cubePositionY = Math.floor(Math.random() * 17) - 8;
                 var cubePositionZ = Math.floor(Math.random() * 17) - 8;
-                this.makeCube(cubePositionX, cubePositionY, cubePositionZ, this.cubeColor);
+                var currentCubeColor;
+                if (i%3 == 0){
+                  this.currentCubeColor = this.cubeColor1;
+                } if (i%3 == 1) {
+                  this.currentCubeColor = this.cubeColor2;
+                } if (i%3 == 2) {
+                  this.currentCubeColor = this.cubeColor3;
+                };
+                this.makeCube(cubePositionX, cubePositionY, cubePositionZ, this.currentCubeColor);
                 this.cubePositionXArray.push(cubePositionX);
                 this.cubePositionYArray.push(cubePositionY);
                 this.cubePositionZArray.push(cubePositionZ);
@@ -144,7 +185,7 @@ define(["app/MyClass"],
 
         p.makeCube = function(x, y, z, color)
         {
-            var cubeGeometry = new THREE.BoxGeometry( 1, 1 , 1);
+            var cubeGeometry = new THREE.BoxGeometry( 1.5, 1.5 , 1.5);
             var material = new THREE.MeshLambertMaterial({ color: color});
             var cube = new THREE.Mesh( cubeGeometry, material);
             cube.position.set ( x, y, z );
@@ -157,8 +198,8 @@ define(["app/MyClass"],
         {
             requestAnimationFrame( this.render.bind(this) );
 
-            wave_array = new Uint8Array(this.analyser.frequencyBinCount);
-            this.analyser.getByteFrequencyData(wave_array);
+            wave_array = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(wave_array);
 
             var wave_array_sum = 0;
 
@@ -200,6 +241,13 @@ define(["app/MyClass"],
             this.camera.updateProjectionMatrix();
             this.renderer.setSize( window.innerWidth, window.innerHeight );
         }
+
+        p.soundNotAllowed = function (error) {
+      h.innerHTML = "You must allow your microphone.";
+      console.log(error);
+  }
+
+
 
         // Return the base class constructor.
         return( Main );
