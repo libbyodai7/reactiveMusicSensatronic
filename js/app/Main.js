@@ -68,7 +68,7 @@ define(["app/MyClass"],
             // analyser.fftSize = 512;
 
             // var start = false;
-            // var permission = false;
+             var permission = false;
             // var seconds = 0;
             // var loud_volume_threshold = 30;
 
@@ -82,6 +82,7 @@ define(["app/MyClass"],
         {
           window.persistAudioStream = stream;
           //h.innerHTML = "Thanks";
+          permission = true;
           var audioContent = new AudioContext(); // AudioContext object instance
             var audioStream = audioContent.createMediaStreamSource( stream );
           var analyser = audioContent.createAnalyser(); // AnalyserNode method
@@ -97,7 +98,9 @@ define(["app/MyClass"],
         p.initScene = function()
         {
 
-          navigator.getUserMedia({audio:true}, this.soundAllowed, this.soundNotAllowed);
+          navigator.mediaDevices.getUserMedia({audio:true})
+          .then(this.soundAllowed)
+          .catch(this.soundNotAllowed);
             // //THREE.JS SCENE
             this.scene = new THREE.Scene();
             this.scene.fog = new THREE.FogExp2( 0xcccccc, 0.0001 );
